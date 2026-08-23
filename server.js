@@ -33,6 +33,9 @@ app.post('/api/send-email', async (req, res) => {
         user: smtpUser,
         pass: smtpPass,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
     })
 
     const htmlBody = `
@@ -83,7 +86,7 @@ app.post('/api/send-email', async (req, res) => {
 
     await transporter.sendMail({
       from: `"Grupo Astikmar - Web" <${smtpUser}>`,
-      to: 'moralesmar277@gmail.com',
+      to: 'Moralesmar277@gmail.com',
       replyTo: correo,
       subject: `Nuevo requerimiento - ${nombre} (${servicio})`,
       html: htmlBody,
