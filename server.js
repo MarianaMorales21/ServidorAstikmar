@@ -1,6 +1,5 @@
 const express = require('express')
 const cors = require('cors')
-const nodemailer = require('nodemailer')
 
 const app = express()
 app.use(cors())
@@ -18,25 +17,12 @@ app.post('/api/send-email', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos obligatorios' })
     }
 
-    const smtpUser = process.env.SMTP_USER
-    const smtpPass = process.env.SMTP_PASS
+    const RESEND_API_KEY = process.env.RESEND_API_KEY
+    const TO_EMAIL = process.env.TO_EMAIL || 'Moralesmar277@gmail.com'
 
-    if (!smtpUser || !smtpPass) {
-      return res.status(500).json({ error: 'SMTP no configurado en el servidor' })
+    if (!RESEND_API_KEY) {
+      return res.status(500).json({ error: 'API key no configurada en el servidor' })
     }
-
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-    })
 
     const htmlBody = `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
@@ -84,15 +70,30 @@ app.post('/api/send-email', async (req, res) => {
       </div>
     `
 
-    await transporter.sendMail({
-      from: `"Grupo Astikmar - Web" <${smtpUser}>`,
-      to: 'Moralesmar277@gmail.com',
-      replyTo: correo,
-      subject: `Nuevo requerimiento - ${nombre} (${servicio})`,
-      html: htmlBody,
-      text: `Nuevo requerimiento - ${nombre}\n\nNombre: ${nombre}\nCorreo: ${correo}\nTeléfono: ${telefono}\nEmpresa: ${empresa || 'No especificada'}\nServicio: ${servicio}\nFecha deseada: ${fecha || 'No especificada'}\n\nMensaje:\n${mensaje}`,
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Grupo Astikmar Web <noreply@grupoastikmar.com>',
+        to: [TO_EMAIL],
+        reply_to: correo,
+        subject: `Nuevo requerimiento - ${nombre} (${servicio})`,
+        html: htmlBody,
+        text: `Nuevo requerimiento - ${nombre}\n\nNombre: ${nombre}\nCorreo: ${correo}\nTelefono: ${telefono}\nEmpresa: ${empresa || 'No especificada'}\nServicio: ${servicio}\nFecha deseada: ${fecha || 'No especificada'}\n\nMensaje:\n${mensaje}`,
+      }),
     })
 
+    const data = await response.json()
+
+    if (!response.ok) {
+      console.error('Resend error:', data)
+      return res.status(500).json({ error: data.message || 'Error al enviar el correo' })
+    }
+
+    console.log('Email sent:', data.id)
     res.json({ success: true, message: 'Correo enviado correctamente' })
   } catch (err) {
     console.error('Email error:', err.message)
