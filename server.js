@@ -18,7 +18,7 @@ app.post('/api/send-email', async (req, res) => {
     }
 
     const RESEND_API_KEY = process.env.RESEND_API_KEY
-    const TO_EMAIL = process.env.TO_EMAIL || 'Moralesmar277@gmail.com'
+    const TO_EMAIL = 'carlos.m@grupoastikmar.com'
 
     if (!RESEND_API_KEY) {
       return res.status(500).json({ error: 'API key no configurada en el servidor' })
