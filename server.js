@@ -83,7 +83,7 @@ app.post('/api/send-email', async (req, res) => {
 
     await transporter.sendMail({
       from: `"Grupo Astikmar - Web" <${smtpUser}>`,
-      to: 'carlos.m@grupoastikmar.com',
+      to: 'moralesmar277@gmail.com',
       replyTo: correo,
       subject: `Nuevo requerimiento - ${nombre} (${servicio})`,
       html: htmlBody,
